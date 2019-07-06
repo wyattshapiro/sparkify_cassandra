@@ -25,7 +25,6 @@ In order to enable a team to effectively gain insight from user activity, a data
 
 - This dataset is a set of songs played by users.
 - Each file is in CSV format and contains metadata about a song, the artist of that song, and the user.
-  - ![Alt text](images/image_event_datafile_new.jpg?raw=true "User Song Dataset example")
 - The files are partitioned by the day of event occurrence. For example:
     - event_data/2018-11-08-events.csv
     - event_data/2018-11-09-events.csv
@@ -33,6 +32,29 @@ In order to enable a team to effectively gain insight from user activity, a data
 
 ## Data Model
 
+As Apache Cassandra is a NoSQL partitioned database, each table was created around a query.
+
+1. "Give me the artist, song title and song's length in the music app history that was heard during sessionId = 338, and itemInSession = 4"
+    - Primary Key
+        - Partition key: session_id
+            - Because this query is focused on investigating history during a session, it can be optimized by partitions across session_id.
+        - Clustering columns: item_in_session
+            - In order to make each row unique, adding item_in_session is required.
+
+2. "Give me only the following: name of artist, song (sorted by itemInSession) and user (first and last name) for userid = 10, sessionid = 182"
+    - Primary Key
+        - Partition key: user_id
+            - Because this query is focused on investigating behavior of a user, it can be optimized by partitions across user_id.
+        - Clustering columns: session_id, item_in_session
+            - In order to make each row unique, adding session_id and item_in_session is required.
+
+3. "Give me every user name (first and last) in my music app history who listened to the song 'All Hands Against His Own'"
+    - Primary Key
+        - Partition key: session_id
+            - Because this query is focused on analyzing popularity of song across history, it can be optimized by partitions across song_name.
+        - Clustering columns: user_id
+            - In order to make each row unique, adding user_id is required.
+            - This will ensure that users with duplicate names will not be dropped because id is unique.
 
 
 ## Installation
@@ -79,19 +101,22 @@ See https://cassandra.apache.org/s for more information.
 
 ## Usage
 
-There is one main scripts:
+There is one main script:
 
-- src/
+- src/Project_1B.ipynb
 
 **Steps to run**
+
 1. Navigate to top of project directory
 2. Create virtualenv (see Dependencies section)
 3. Activate virtualenv (see Dependencies section)
 4. Install requirements (see Dependencies section)
 5. Start local Apache Cassandra server (see Dependencies section)
 6. $ jupyter notebook
-
-## Analysis
+7. Navigate to Projct_1B script
+8. Run All cells in jupyter notebook
 
 
 ## Future Optimizations
+
+- Create an analytical dashboard to allow others to visually interact with data
